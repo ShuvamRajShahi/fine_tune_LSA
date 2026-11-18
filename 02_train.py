@@ -27,16 +27,16 @@ MODEL_ID       = "Qwen/Qwen2.5-7B-Instruct"   # base model on HF Hub
 DATA_DIR       = Path("data")
 ADAPTER_OUT    = Path("adapters_cuda")
 
-LORA_RANK      = 8
-LORA_ALPHA     = 20          # scale in MLX config was 20.0
+LORA_RANK      = 16          #rank was first 8 and changed to 16
+LORA_ALPHA     = 32          # scale in MLX config was 20.0 later changed to 32
 LORA_DROPOUT   = 0.0
 NUM_LAYERS     = 16          # target the last 16 transformer layers
 
-LR             = 1e-5
+LR             = 2e-4
 BATCH_SIZE     = 1
-GRAD_ACCUM     = 1
+GRAD_ACCUM     = 8
 MAX_SEQ_LEN    = 1024
-MAX_STEPS      = 1500
+MAX_STEPS      = 3000
 EVAL_STEPS     = 150
 SAVE_STEPS     = 300
 SEED           = 0
