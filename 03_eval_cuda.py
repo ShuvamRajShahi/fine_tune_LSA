@@ -23,9 +23,23 @@ MAX_TOKENS   = 30
 LABELS = ["Benign Status", "DDoS Attack", "Dictionary Attack", "Other Attack"]
 
 
-def head(text):
-    """Return the first matching label, or 'Unknown'."""
-    return next((l for l in LABELS if text.startswith(l)), "Unknown")
+def head(text: str) -> str:
+    """Extract the predicted label reliably, tolerating formatting variations."""
+    clean = text.strip().replace("*", "").replace("`", "")
+    # 1. Prefix match
+    for l in LABELS:
+        if clean.lower().startswith(l.lower()):
+            return l
+    # 2. Match in first line
+    first_line = clean.split("\n")[0].lower()
+    for l in LABELS:
+        if l.lower() in first_line:
+            return l
+    # 3. Match anywhere in output
+    for l in LABELS:
+        if l.lower() in clean.lower():
+            return l
+    return "Unknown"
 
 
 # ─────────────────────── load model ──────────────────────────────────
@@ -41,6 +55,7 @@ model = AutoModelForCausalLM.from_pretrained(
     quantization_config=bnb_config,
     device_map="auto",
     dtype=torch.bfloat16,
+    attn_implementation="sdpa",
     trust_remote_code=False,
 )
 if ADAPTER_PATH.exists():

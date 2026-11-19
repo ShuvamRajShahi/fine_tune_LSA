@@ -6,3 +6,6 @@ adapters_cuda/checkpoint-*/
 
 #pycache
 __pycache__
+
+# csv files
+ccess_log.csv

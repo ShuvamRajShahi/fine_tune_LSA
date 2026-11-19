@@ -4,7 +4,7 @@ import pandas as pd
 from pathlib import Path
 
 # ---------- CELL 1: settings you can tune ----------
-CSV_FILES = sys.argv[1:] or ["DictionaryBruteForce.csv"]   # pass several CSVs: benign, ddos, dictionary
+CSV_FILES = sys.argv[1:] or ["DictionaryBruteForce.csv"] #or ["access_log.csv"]  # pass several CSVs: benign, ddos, dictionary
 OUT_DIR = Path("data")
 MAX_PER_CLASS = 3000          # keeps classes balanced
 SEED = 42

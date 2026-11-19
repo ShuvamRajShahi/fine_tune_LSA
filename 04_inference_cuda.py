@@ -22,6 +22,22 @@ LABELS = ["Benign Status", "DDoS Attack", "Dictionary Attack", "Other Attack"]
 SYSTEM = open("data/system_prompt.txt").read()
 COLS   = json.load(open("data/feature_cols.json"))
 
+
+def extract_label(text: str) -> str:
+    """Extract label reliably, tolerating markdown bolding and whitespace."""
+    clean = text.strip().replace("*", "").replace("`", "")
+    for l in LABELS:
+        if clean.lower().startswith(l.lower()):
+            return l
+    first_line = clean.split("\n")[0].lower()
+    for l in LABELS:
+        if l.lower() in first_line:
+            return l
+    for l in LABELS:
+        if l.lower() in clean.lower():
+            return l
+    return "Unknown"
+
 # ─────────────────────── load model once ─────────────────────────────
 print("Loading model …")
 bnb_config = BitsAndBytesConfig(
@@ -35,6 +51,7 @@ model = AutoModelForCausalLM.from_pretrained(
     quantization_config=bnb_config,
     device_map="auto",
     dtype=torch.bfloat16,
+    attn_implementation="sdpa",
     trust_remote_code=False,
 )
 if ADAPTER_PATH.exists():
@@ -74,7 +91,7 @@ def classify_flow(features: dict) -> dict:
         msgs, add_generation_prompt=True, tokenize=False
     )
     out = _generate(prompt)
-    status = next((l for l in LABELS if out.startswith(l)), "Unknown")
+    status = extract_label(out)
     return {"status": status, "raw": out}
 
 
