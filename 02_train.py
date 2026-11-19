@@ -36,23 +36,22 @@ MODEL_ID       = "Qwen/Qwen2.5-7B-Instruct"
 DATA_DIR       = Path("data")
 ADAPTER_OUT    = Path("adapters_cuda")
 
-# LoRA hyper-parameters (all linear layers across all 28 layers)
+# LoRA hyper-parameters (attention projections across all 28 layers)
 LORA_RANK      = 16
 LORA_ALPHA     = 32
 LORA_DROPOUT   = 0.05
 TARGET_MODULES = [
     "q_proj", "k_proj", "v_proj", "o_proj",
-    "gate_proj", "up_proj", "down_proj",
 ]
 
-# Training schedule
+# Training schedule (Option 1: 1 pass/step, guaranteed < 5.8 GB VRAM, ~28 mins total)
 LR             = 2e-4
-BATCH_SIZE     = 2           # fits comfortably in 8 GB VRAM with seq len 384
-GRAD_ACCUM     = 4           # effective batch size = 2 * 4 = 8
-MAX_STEPS      = 800         # 800 steps = 6,400 samples (finishes in ~25 mins)
+BATCH_SIZE     = 1           # strictly 1 sample per forward pass (no VRAM spiking)
+GRAD_ACCUM     = 1           # 1 step = 1 pass (~1.7s per step)
+MAX_STEPS      = 1000        # 1,000 steps (~28 minutes total)
 MAX_SEQ_LEN    = 384         # verified: dataset max length is 376 tokens
-EVAL_STEPS     = 100
-SAVE_STEPS     = 200
+EVAL_STEPS     = 200
+SAVE_STEPS     = 500
 SEED           = 42
 # ──────────────────────────────────────────────────────────────────────
 
@@ -132,7 +131,7 @@ def main():
     model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=True)
 
     # ─────────────────────── 3. attach LoRA ──────────────────────────────
-    print(f"Attaching LoRA (rank={LORA_RANK}, alpha={LORA_ALPHA}) to all linear layers …")
+    print(f"Attaching LoRA (rank={LORA_RANK}, alpha={LORA_ALPHA}) to attention layers (q, k, v, o) …")
     lora_config = LoraConfig(
         task_type=TaskType.CAUSAL_LM,
         r=LORA_RANK,
